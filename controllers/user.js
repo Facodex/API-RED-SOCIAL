@@ -1,7 +1,8 @@
 // IMPORTAR DEPENDENCIAS Y MODULOS 
 const User = require("../models/user");
 const bcrypt = require("bcrypt");
-
+// importamos la funcion que crea el token 
+const jwt = require('../services/jwt');
 
 // ACCIONES DE PRUEBA 
 const pruebaUser = (req, res) => {
@@ -79,20 +80,50 @@ const register = (req, res) => {
 const login = (req, res) => {
 
     // recoger parametros del body 
+    let params = req.body;
 
+    if(!params.email || !params.password){
+        return res.status(400).send({
+            status: "error",
+            message: "FALTAN DATOS POR ENVIAR",
+        });
+    }
     // buscar en la BD si existe 
+    User.findOne({email: params.email})
+        // .select({"password": 0})
+        .exec((error, user) =>{
+            if(error || !user){
+                return res.status(404).send({
+                    status: "error",
+                    message: "NO EXISTE EL USUARIO",
+                });
+            }
 
-    //comporbar su contraseña 
+            //comporbar su contraseña 
+            let pwd = bcrypt.compareSync(params.password, user.password)
+            if( !pwd ){
+                return res.status(404).send({
+                    status: "error",
+                    message: "LA CONTRASEÑA ES INCORRECTA",
+                });
+            }
+            // conseguir el token 
+            const token = jwt.createToken(user);
 
-    // devolver el token 
-
-    // devolver datos del usuario
+            // devolver datos del usuario
+            return res.status(200).json({
+                status: "success",
+                message: "TE HAS IDENTIFICADO CORRECTAMENTE",
+                user: {
+                    id: user._id,
+                    name: user.name,
+                    nick: user.nick
+                },
+                token
+            });
+        });
 
     
-    return res.status(200).json({
-        status: "success",
-        message: "ACCION DE LOGIN",
-    });
 }
 
 
