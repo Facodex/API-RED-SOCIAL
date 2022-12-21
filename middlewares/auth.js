@@ -6,7 +6,7 @@ const moment = require('moment');
 const libjwt = require('../services/jwt');
 const secret = libjwt.secret;
 
-// FUNCION DE AUTENTICACION 
+// FUNCION MIDDLEWARE DE AUTENTICACION 
 exports.auth = (req, res, next) => {
 
     // COMPROBAR SI LLEGA LA CABECERA DE AUTH 
@@ -19,10 +19,31 @@ exports.auth = (req, res, next) => {
     // LIMPIAR EL TOKEN 
     let token = req.headers.authorization.replace(/['"]+/g, '');
     // DECODIFICAR EL TOKEN
-    
-    // AGREGAR DATOS DE USUARIO A LA REQUEST 
+    try {
+        let payload = jwt.decode(token, secret);
+
+        // comprobar expiracion del token
+        if( payload.exp <= moment().unix()){
+            return res.status(404).send({
+                status: "error",
+                message: "TOKEN EXPIRADO",
+            });
+        }
+
+        // AGREGAR DATOS DE USUARIO A LA REQUEST 
+        req.user = payload; //creamos la propiedad user dentro de req
+
+    } catch (error) {
+        return res.status(404).send({
+            status: "error",
+            message: "TOKEN INVALIDO",
+            error
+        });
+    }
+
 
     //  PASAR A LA EJECUCION DE LA ACCION
+    next();
 }
 
 
