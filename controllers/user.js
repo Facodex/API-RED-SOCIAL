@@ -55,7 +55,7 @@ const register = (req, res) => {
 
         //guardar usuario en la DB
         user_to_save.save((error, userStored) => {
-            if (error || !userStored ) {
+            if (error || !userStored) {
                 return res.status(500).send({
                     status: "error",
                     message: "Error al guardar el usuario"
@@ -84,17 +84,17 @@ const login = (req, res) => {
     // recoger parametros del body 
     let params = req.body;
 
-    if(!params.email || !params.password){
+    if (!params.email || !params.password) {
         return res.status(400).send({
             status: "error",
             message: "FALTAN DATOS POR ENVIAR",
         });
     }
     // buscar en la BD si existe 
-    User.findOne({email: params.email})
+    User.findOne({ email: params.email })
         // .select({"password": 0})
-        .exec((error, user) =>{
-            if(error || !user){
+        .exec((error, user) => {
+            if (error || !user) {
                 return res.status(404).send({
                     status: "error",
                     message: "NO EXISTE EL USUARIO",
@@ -103,7 +103,7 @@ const login = (req, res) => {
 
             //comporbar su contraseña 
             let pwd = bcrypt.compareSync(params.password, user.password)
-            if( !pwd ){
+            if (!pwd) {
                 return res.status(404).send({
                     status: "error",
                     message: "LA CONTRASEÑA ES INCORRECTA",
@@ -125,7 +125,7 @@ const login = (req, res) => {
             });
         });
 
-    
+
 }
 
 
@@ -136,25 +136,25 @@ const profile = (req, res) => {
 
     // CONSULTA PARA SACAR LOS DATOS DEL USUARIO
     User.findById(id)
-        .select({password: 0, role: 0})
-        .exec((error, userProfile) =>{
-        if(error || !userProfile){
-            return res.status(404).send({
-                status: "error",
-                message: "EL USUARIO NO EXISTE O HAY UN ERROR"
-            });
-        }
+        .select({ password: 0, role: 0 })
+        .exec((error, userProfile) => {
+            if (error || !userProfile) {
+                return res.status(404).send({
+                    status: "error",
+                    message: "EL USUARIO NO EXISTE O HAY UN ERROR"
+                });
+            }
 
-        // DEVOLVER EL RESULTADO 
-        // POSTERIORMENTE DEVOLVER INFO DE FOLLOWS 
-        return res.status(200).json({
-            status: "success",
-            user: userProfile
+            // DEVOLVER EL RESULTADO 
+            // POSTERIORMENTE DEVOLVER INFO DE FOLLOWS 
+            return res.status(200).json({
+                status: "success",
+                user: userProfile
+            });
+
         });
 
-    });
 
-    
 }
 
 
@@ -163,7 +163,7 @@ const list = (req, res) => {
 
     // CONTROLAR QUE PAGINA ESTAMOS
     let page = 1;
-    if(req.params.page){
+    if (req.params.page) {
         page = req.params.page;
     }
     page = parseInt(page);
@@ -174,7 +174,7 @@ const list = (req, res) => {
     User.find().sort('_id').paginate(page, itemsPerPage, (error, users, total) => {
 
 
-        if(error || !users){
+        if (error || !users) {
             return res.status(500).send({
                 status: "error",
                 message: "ERROR EN LA CONSULTA",
@@ -189,17 +189,86 @@ const list = (req, res) => {
             page,
             itemsPerPage,
             total,
-            pages: Math.ceil(total/itemsPerPage) //asi redondeamos con math
+            pages: Math.ceil(total / itemsPerPage) //asi redondeamos con math
         });
     });
 
 }
 
+
+// METODO PARA ACTAULIZAR INFORMACION DEL USUARIO 
+const update = (req, res) => {
+
+    // recoger info del usuario 
+    let userIdentity = req.user;
+    let userToUpdate = req.body;
+
+    // eliminar campos sobrantes 
+    delete userToUpdate.iat;
+    delete userToUpdate.exp;
+    delete userToUpdate.role;
+    delete userToUpdate.image;
+
+    // comprobar si el usuario existe
+    User.find({
+
+        $or: [
+            { email: userToUpdate.email.toLowerCase() },
+            { nick: userToUpdate.nick.toLowerCase() }
+        ]
+
+    }).exec(async (error, users) => {
+        if (error) return res.status(500).json({ status: "error", message: "Error en la consulta de usuarios" });
+
+        let userIsset = false;
+        users.forEach( user => {
+            if(user && user._id != userIdentity.id) userIsset = true;
+        });
+
+        if (userIsset) {
+            return res.status(200).send({
+                status: "success",
+                message: "El usuario ya existe"
+            });
+        }
+        
+        //cifrar la contraseña
+        if(userToUpdate.password){
+            let pwd = await bcrypt.hash(userToUpdate.password, 10);
+            userToUpdate.password = pwd;
+        }  
+
+        // buscar y actualizar 
+        User.findByIdAndUpdate( userIdentity.id, userToUpdate, {new: true}, (error, userUpdate) => {
+
+            if(error || !userUpdate ){
+                return res.status(500).send({
+                    status: "error",
+                    message: "ERROR AL ACTUALIZAR USUARIO",
+                    error
+                });
+            }
+
+            // devuelvo respuesta 
+            return res.status(200).json({
+                status: "success",
+                message: "Metodo para actualizar info del usuario",
+                user: userUpdate
+            });
+        });
+
+        
+        
+    });
+        
+}
+
 // EXPORTAR ACCIONES 
 module.exports = {
-    pruebaUser,
-    register,
-    login,
-    profile,
-    list
-}
+            pruebaUser,
+            register,
+            login,
+            profile,
+            list,
+            update
+        }
