@@ -3,6 +3,7 @@ const User = require("../models/user");
 const bcrypt = require("bcrypt");
 // importamos la funcion que crea el token 
 const jwt = require('../services/jwt');
+const mongoosePagination = require('mongoose-pagination');
 
 // ACCIONES DE PRUEBA 
 const pruebaUser = (req, res) => {
@@ -12,7 +13,7 @@ const pruebaUser = (req, res) => {
     });
 }
 
-// REGISTRO DE USUARIOS 
+// METODO/ACCION REGISTRO DE USUARIOS 
 const register = (req, res) => {
     // recoger datos de la peticion 
     let params = req.body;
@@ -77,7 +78,7 @@ const register = (req, res) => {
 
 }
 
-// accion login que devolvera si te identificaste de manera correcta 
+// METODO/ACCION login que devolvera si te identificaste de manera correcta 
 const login = (req, res) => {
 
     // recoger parametros del body 
@@ -128,9 +129,77 @@ const login = (req, res) => {
 }
 
 
+// METODO PARA TRAER LA INFO DEL USUARIO 
+const profile = (req, res) => {
+    // RECIBIR EL PARAMETRO DEL ID DEL USUARIO POR LA URL 
+    const id = req.params.id;
+
+    // CONSULTA PARA SACAR LOS DATOS DEL USUARIO
+    User.findById(id)
+        .select({password: 0, role: 0})
+        .exec((error, userProfile) =>{
+        if(error || !userProfile){
+            return res.status(404).send({
+                status: "error",
+                message: "EL USUARIO NO EXISTE O HAY UN ERROR"
+            });
+        }
+
+        // DEVOLVER EL RESULTADO 
+        // POSTERIORMENTE DEVOLVER INFO DE FOLLOWS 
+        return res.status(200).json({
+            status: "success",
+            user: userProfile
+        });
+
+    });
+
+    
+}
+
+
+// METODO/ACCION LISTADO DE USUARIOS 
+const list = (req, res) => {
+
+    // CONTROLAR QUE PAGINA ESTAMOS
+    let page = 1;
+    if(req.params.page){
+        page = req.params.page;
+    }
+    page = parseInt(page);
+
+    //CONSULTA CON MONGOOSE PAGINATION
+    let itemsPerPage = 5; //le digo que quiero 5 usuarios por pagina
+
+    User.find().sort('_id').paginate(page, itemsPerPage, (error, users, total) => {
+
+
+        if(error || !users){
+            return res.status(500).send({
+                status: "error",
+                message: "ERROR EN LA CONSULTA",
+                error
+            });
+        }
+
+        // DEVOLVER EL RESULTADO (POSTERIORMENTE INFO DE FOLLOWS)
+        return res.status(200).json({
+            status: "success",
+            users,
+            page,
+            itemsPerPage,
+            total,
+            pages: Math.ceil(total/itemsPerPage) //asi redondeamos con math
+        });
+    });
+
+}
+
 // EXPORTAR ACCIONES 
 module.exports = {
     pruebaUser,
     register,
-    login
+    login,
+    profile,
+    list
 }
