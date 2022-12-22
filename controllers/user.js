@@ -242,7 +242,7 @@ const update = (req, res) => {
 
         // buscar y actualizar 
         try {
-            let userUpdate = await User.findByIdAndUpdate( userIdentity.id, userToUpdate, {new: true});
+            let userUpdate = await User.findByIdAndUpdate( {_id: userIdentity.id}, userToUpdate, {new: true});
 
             if(!userUpdate ){
                 return res.status(404).send({
@@ -303,7 +303,7 @@ const upload = (req, res) => {
 
     // SI ES CORRECTA GUARDAD IMAGEN EL LA BASE DE DATOS 
 
-    User.findOneAndUpdate(req.user.id, {image: req.file.filename}, {new: true}, (error, userUpdate) => {
+    User.findOneAndUpdate({ _id: req.user.id }, {image: req.file.filename}, {new: true}, (error, userUpdate) => {
 
         if(error || !userUpdate){
             return res.status(400).json({
