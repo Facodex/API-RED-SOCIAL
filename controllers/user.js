@@ -4,6 +4,8 @@ const bcrypt = require("bcrypt");
 // importamos la funcion que crea el token 
 const jwt = require('../services/jwt');
 const mongoosePagination = require('mongoose-pagination');
+const fs = require('fs');
+
 
 // ACCIONES DE PRUEBA 
 const pruebaUser = (req, res) => {
@@ -239,13 +241,13 @@ const update = (req, res) => {
         }  
 
         // buscar y actualizar 
-        User.findByIdAndUpdate( userIdentity.id, userToUpdate, {new: true}, (error, userUpdate) => {
+        try {
+            let userUpdate = await User.findByIdAndUpdate( userIdentity.id, userToUpdate, {new: true});
 
-            if(error || !userUpdate ){
-                return res.status(500).send({
+            if(!userUpdate ){
+                return res.status(404).send({
                     status: "error",
-                    message: "ERROR AL ACTUALIZAR USUARIO",
-                    error
+                    message: "ERROR CON EL USUARIO A ACTUALIZAR"
                 });
             }
 
@@ -255,20 +257,83 @@ const update = (req, res) => {
                 message: "Metodo para actualizar info del usuario",
                 user: userUpdate
             });
-        });
 
-        
-        
+        } catch (error) {
+
+            return res.status(500).send({
+                status: "error",
+                message: "ERROR AL ACTUALIZAR USUARIO"
+            });
+
+        } 
     });
-        
+
 }
+
+// METODO/ACCION UPLOAD IMAGE 
+const upload = (req, res) => {
+
+    // RECOGER EL FICHERO DE IMAGEN Y COMPORBAR QUE EXISTE
+    if(!req.file){
+        return res.status(500).send({
+            status: "error",
+            message: "NO HA LLEGADO LA IMAGEN"
+        });
+    }
+    // CONSEGUIR EL NOMBRE DEL ARCHIVO 
+    let image = req.file.originalname;
+
+    // SACAR LA EXTENSION DEL ARCHIVO 
+    let imageSplit = image.split('\.')
+    let extension = imageSplit[1];
+
+    // COMPROBAR EXTENSION Y SI NO ES CORRECTA BORRAR ARCHIVO 
+    if( extension != 'png' && extension != 'jpg' && extension != 'jpeg' && extension != 'gif'){
+
+        const filePath = req.file.path;
+        const fileDelete = fs.unlinkSync(filePath);
+
+        return res.status(500).send({
+            status: "error",
+            message: "NO HAS SUBIDO UN ARCHIVO DE IMAGEN"
+        });
+    }    
+
+    
+
+    // SI ES CORRECTA GUARDAD IMAGEN EL LA BASE DE DATOS 
+
+    User.findOneAndUpdate(req.user.id, {image: req.file.filename}, {new: true}, (error, userUpdate) => {
+
+        if(error || !userUpdate){
+            return res.status(400).json({
+                status: "error",
+                message: "ERROR EN LA SUBIDA DEL AVATAR"
+            });
+        }
+
+        // DEVOLVER RESPUESTA 
+        return res.status(200).json({
+            status: "success",
+            user: userUpdate,
+            file: req.file,
+        });
+    });
+
+}
+
+
+// METODO/ACCION PARA SACAR EL AVATAR 
+
+
 
 // EXPORTAR ACCIONES 
 module.exports = {
-            pruebaUser,
-            register,
-            login,
-            profile,
-            list,
-            update
-        }
+    pruebaUser,
+    register,
+    login,
+    profile,
+    list,
+    update,
+    upload
+}
