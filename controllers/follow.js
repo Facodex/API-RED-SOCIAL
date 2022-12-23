@@ -2,6 +2,12 @@
 const Follow = require("../models/follow");
 const User = require("../models/user");
 
+// dependencias 
+const mongoosePagination = require('mongoose-pagination');
+
+// importar servicios 
+const followService = require('../services/followService');
+
 // ACCIONES DE PRUEBA 
 const pruebaFollow = (req, res) => {
     return res.status(200).send({
@@ -79,14 +85,58 @@ const unfollow = (req, res) => {
     
 } 
 
-// METODO/ACCION LISTADO USUARIOS QUE SIGO 
+// METODO/ACCION LISTADO DE USUARIOS QUE ALGUN USUARIO SIGUE (siguiendo)
+const following = (req, res) => {
 
-// METODO/ACCION LISTADO DE USUARIOS QUE ME SIGUEN
+    // sacar el id del usuario identificado 
+    let userId = req.user.id;
 
+    // comprobar si me llega el id por url 
+    if(req.params.id) userId = req.params.id;
+
+    // comprobar si me llega la pagina 
+    let page = 1;
+    if( req.params.page) page = req.params.page;
+
+    // indicar cuantos usuarios por pagina quiero mostrar
+    const itemsPerPage = 5;
+
+    // find a follow, popular los datos de los usuarios y paginar
+    Follow.find({user: userId})
+        .populate("user followed", "-password -role -__v")
+        .paginate(page, itemsPerPage, async (error, follows, total) => {
+
+
+            // funcion soy facu y veo la lista de jaqui, sacar un array de ids con los que me siguen y los que sigo  
+            let followUserIds = await followService.followUserIds(req.user.id);
+
+            return res.status(200).send({
+                status: "succes",
+                message: "LISTADO DE USUARIOS QUE x ESTA SIGUIENDO",
+                follows,
+                total,
+                pages: Math.ceil(total/itemsPerPage),
+                user_following: followUserIds.following,
+                user_follow_me: followUserIds.followers
+            });
+
+        });
+            
+}
+
+// METODO/ACCION LISTADO DE USUARIOS SIGUEN A UN USUARIO (seguidores)
+const followers = (req, res) => {
+    return res.status(200).send({
+        status: "succes",
+        message: "LISTA DE SEGUIDORES DE X"
+    });
+}
 
 // EXPORTAR ACCIONES 
 module.exports = {
     pruebaFollow,
     save,
-    unfollow
+    unfollow,
+    following,
+    followers
 }
