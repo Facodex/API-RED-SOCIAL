@@ -14,7 +14,7 @@ const followUserIds = async( identityUserId ) => {
         // asi sacamos la informacion de los seguidores
         let followers = await Follow.find({"followed": identityUserId})
         .select({"user": 1, "_id": 0})
-        .exec();;
+        .exec();
 
         // procesar la informacion de seguidos y seguidores 
         // seguidos
@@ -41,9 +41,24 @@ const followUserIds = async( identityUserId ) => {
     
 }
 
+
+// funcion para saber si a un usuario unico lo sigo y si el me sigue
+// identityUserId => Siempre será la persona que esta navegando en la red social
+// profileUserId => Es el otro usuario al que quiero saber si sigo y si me sigue 
 const followThisUser = async( identityUserId, profileUserId ) => {
 
+    // sacando si sigo este usuairo "user soy yo" "followed es la persona que sigo"
+    let following = await Follow.findOne({"user": identityUserId, "followed": profileUserId});
+
+    // sacando si me sigue este usuairo "user es el usuario" "followed soy yo"
+    let follower = await Follow.findOne({"user": profileUserId, "followed": identityUserId});
+
+    return {
+        following,
+        follower
+    }
 }
+
 
 module.exports = {
     followUserIds,

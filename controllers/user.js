@@ -1,11 +1,14 @@
 // IMPORTAR DEPENDENCIAS Y MODULOS 
 const User = require("../models/user");
 const bcrypt = require("bcrypt");
-// importamos la funcion que crea el token 
-const jwt = require('../services/jwt');
+
 const mongoosePagination = require('mongoose-pagination');
 const fs = require('fs');
 const path = require('path');
+
+// importamos SERVICIOS 
+const jwt = require('../services/jwt');
+const followService = require('../services/followService');
 
 // ACCIONES DE PRUEBA 
 const pruebaUser = (req, res) => {
@@ -134,12 +137,13 @@ const login = (req, res) => {
 // METODO PARA TRAER LA INFO DEL USUARIO 
 const profile = (req, res) => {
     // RECIBIR EL PARAMETRO DEL ID DEL USUARIO POR LA URL 
+    //SERA EL ID DEL USUARIO DEL PERFIL QUE QUEREMOS VER
     const id = req.params.id;
 
     // CONSULTA PARA SACAR LOS DATOS DEL USUARIO
     User.findById(id)
         .select({ password: 0, role: 0 })
-        .exec((error, userProfile) => {
+        .exec(async(error, userProfile) => {
             if (error || !userProfile) {
                 return res.status(404).send({
                     status: "error",
@@ -147,11 +151,15 @@ const profile = (req, res) => {
                 });
             }
 
+            // INFORMACION DE SEGUIMIENTO 
+            // req.user.id es el usuario que esta navegando e id es el usuario del perfil que estamos viendo
+            const followInfo = await followService.followThisUser(req.user.id, id)
             // DEVOLVER EL RESULTADO 
-            // POSTERIORMENTE DEVOLVER INFO DE FOLLOWS 
             return res.status(200).json({
                 status: "success",
-                user: userProfile
+                user: userProfile,
+                following: followInfo.following,    //si lo sigo
+                follower: followInfo.follower       //si me sigue
             });
 
         });
