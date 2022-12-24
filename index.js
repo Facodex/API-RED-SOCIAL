@@ -27,7 +27,7 @@ const PublicationRoutes = require("./routes/publication");
 const FollowRoutes = require("./routes/follow");
 
 app.use("/api/user", UserRoutes);
-app.use("/api/publications", PublicationRoutes);
+app.use("/api/publication", PublicationRoutes);
 app.use("/api/follow", FollowRoutes);
 
 // ruta de prueba 
