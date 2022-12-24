@@ -1,6 +1,8 @@
 // IMPORTAR DEPENDENCIAS Y MODULOS 
 const User = require("../models/user");
 const bcrypt = require("bcrypt");
+const Follow = require('../models/follow');
+const Publication = require('../models/publication');
 
 const mongoosePagination = require('mongoose-pagination');
 const fs = require('fs');
@@ -181,7 +183,10 @@ const list = (req, res) => {
     //CONSULTA CON MONGOOSE PAGINATION
     let itemsPerPage = 5; //le digo que quiero 5 usuarios por pagina
 
-    User.find().sort('_id').paginate(page, itemsPerPage, async(error, users, total) => {
+    User.find()
+        .select('-email -password -role -__v')
+        .sort('_id')
+        .paginate(page, itemsPerPage, async(error, users, total) => {
 
 
         if (error || !users) {
@@ -251,7 +256,9 @@ const update = (req, res) => {
         if(userToUpdate.password){
             let pwd = await bcrypt.hash(userToUpdate.password, 10);
             userToUpdate.password = pwd;
-        }  
+        }else{
+            delete userToUpdate.password;
+        }
 
         // buscar y actualizar 
         try {
@@ -360,6 +367,35 @@ const avatar = (req, res) => {
     
 }
 
+// metodo counter para sacar el numero de seguidos y seguidores 
+const counters = async (req, res) => {
+
+    let userId = req.user.id;
+
+    if(req.params.id){ userId = req.params.id; }
+
+    try {
+        const following = await Follow.count({"user": userId});
+
+        const followed = await Follow.count({"followed": userId});
+
+        const publications = await Publication.count({"user": userId});
+
+        return res.status(200).send({
+            userId,
+            following: following,
+            followed: followed,
+            publications: publications
+        });
+
+    } catch (error) {
+        return res.status(404).json({
+            status: "error",
+            message: "NO EN LOS CONTADORES"
+        });
+    }
+}
+
 
 // EXPORTAR ACCIONES 
 module.exports = {
@@ -370,5 +406,6 @@ module.exports = {
     list,
     update,
     upload,
-    avatar
+    avatar,
+    counters
 }
