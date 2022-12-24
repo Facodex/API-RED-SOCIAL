@@ -181,7 +181,7 @@ const list = (req, res) => {
     //CONSULTA CON MONGOOSE PAGINATION
     let itemsPerPage = 5; //le digo que quiero 5 usuarios por pagina
 
-    User.find().sort('_id').paginate(page, itemsPerPage, (error, users, total) => {
+    User.find().sort('_id').paginate(page, itemsPerPage, async(error, users, total) => {
 
 
         if (error || !users) {
@@ -192,6 +192,9 @@ const list = (req, res) => {
             });
         }
 
+        // funcion soy facu y veo la lista de jaqui, sacar un array de ids con los que me siguen y los que sigo  
+        let followUserIds = await followService.followUserIds(req.user.id);
+
         // DEVOLVER EL RESULTADO (POSTERIORMENTE INFO DE FOLLOWS)
         return res.status(200).json({
             status: "success",
@@ -199,7 +202,9 @@ const list = (req, res) => {
             page,
             itemsPerPage,
             total,
-            pages: Math.ceil(total / itemsPerPage) //asi redondeamos con math
+            pages: Math.ceil(total / itemsPerPage), //asi redondeamos con math
+            user_following: followUserIds.following,
+            user_follow_me: followUserIds.followers
         });
     });
 
