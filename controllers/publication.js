@@ -15,7 +15,7 @@ const save = (req, res) => {
     let params = req.body;
 
     // si no me llegan dar respuesta negativa 
-    if(!params.text){
+    if (!params.text) {
         return res.status(400).send({
             status: "error",
             message: "DEBES ENVIAR EL TEXTO DE LA PUBLICACION"
@@ -28,7 +28,7 @@ const save = (req, res) => {
 
     // guardar objeto en BD 
     newPublication.save((error, publicationStored) => {
-        if(error || !publicationStored){
+        if (error || !publicationStored) {
             return res.status(400).send({
                 status: "error",
                 message: "NO SE HA GUARDADO LA PUBLICACION"
@@ -54,7 +54,7 @@ const detail = (req, res) => {
 
     // find de la condicion del id 
     Publication.findById(plublicationId, (error, publicationStored) => {
-        if(error || !publicationStored){
+        if (error || !publicationStored) {
             return res.status(404).send({
                 status: "error",
                 message: "NO EXISTE LA PUBLICACION",
@@ -78,8 +78,8 @@ const remove = (req, res) => {
     const plublicationId = req.params.id;
 
     // hacer un find y comprobar que solo sean publicaciones del usuario identificado
-    Publication.find({"user": req.user.id, "_id": plublicationId}).remove(error => {
-        if(error){
+    Publication.find({ "user": req.user.id, "_id": plublicationId }).remove(error => {
+        if (error) {
             return res.status(500).send({
                 status: "error",
                 message: "ERROR EN ELIMINAR PUBLICACION"
@@ -91,15 +91,49 @@ const remove = (req, res) => {
             message: "PUBLICACION ELIMINADA",
             publication: plublicationId
         });
-            
+
     });
 
 }
 
-// ACCION PARA LISTAR PUBLICACIONES 
+// LISTAR PUBLICACIONES DE UN USUAURIO EN ESPECIFICO
+const user = (req, res) => {
+    // sacar el id del usuario
+    const userId = req.params.id;
 
+    // controlar la pagina 
+    let page = 1;
+    if (req.params.page) page = req.params.page;
 
-// LSITAR PUBLICACIONES DE UN USUAURIO EN ESPECIFICO
+    const itemsPerPage = 5;
+
+    // find populate ordenar de mas nuevas a mas viejas, paginar
+    Publication.find({ "user": userId })
+        .sort('-created_at')
+        .populate('user', '-password -__v -role')
+        .paginate(page, itemsPerPage, (error, publications, total) => {
+
+            if (error || !publications || publications.length <= 0) {
+                return res.status(404).send({
+                    status: "error",
+                    message: "EL USUARIO NO TIENE PUBLICACIONES",
+                });
+            }
+
+            return res.status(200).send({
+                status: "success",
+                message: "PUBLICACIONES DEL USUARIO",
+                page,
+                total,
+                pages: Math.ceil(total / itemsPerPage),
+                publications
+            });
+
+        });
+
+}
+
+// ACCION PARA LISTAR PUBLICACIONES (FEED)
 
 
 // FUNCION PARA SUBIR FICHEROS 
@@ -112,5 +146,6 @@ module.exports = {
     pruebaPublication,
     save,
     detail,
-    remove
+    remove,
+    user
 }
