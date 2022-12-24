@@ -14,3 +14,14 @@ Carpeta uploads: guarda los avatares de los usuarios
 
 EL FLUJO QUE SE INTENTA SEGUIR
 MODELO: USER => METODO CONTROLADOR: REGISTER => RUTA: /REGISTER CON PARAMETROS OPCIONALES Y METODOS => DEVUELVE RESPUESTA
+
+
+METODOS DE CONSULTA MAS USADOS
+.exec()
+.populate()
+.select()
+.pagination()
+.find()
+.findOne()
+.findByIdAndUpdate()
+.findOneAndUpdate()
