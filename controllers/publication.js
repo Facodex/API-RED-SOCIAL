@@ -1,5 +1,7 @@
-// IMPROTANDO MODELO Y DEPENDENCIAS
+// IMPROTANDO MODELO Y DEPENDENCIAS Y SERVICIOS
 const Publication = require('../models/publication');
+const followService = require('../services/followService');
+
 const fs = require('fs');
 const path = require('path');
 
@@ -112,7 +114,7 @@ const user = (req, res) => {
     // find populate ordenar de mas nuevas a mas viejas, paginar
     Publication.find({ "user": userId })
         .sort('-created_at')
-        .populate('user', '-password -__v -role')
+        .populate('user', '-password -__v -role -email')
         .paginate(page, itemsPerPage, (error, publications, total) => {
 
             if (error || !publications || publications.length <= 0) {
@@ -134,8 +136,6 @@ const user = (req, res) => {
         });
 
 }
-
-// ACCION PARA LISTAR PUBLICACIONES (FEED)
 
 
 // FUNCION PARA SUBIR FICHEROS 
@@ -217,6 +217,58 @@ const media = (req, res) => {
 
 }
 
+// ACCION PARA LISTAR PUBLICACIONES (FEED)
+const feed = async (req, res) => {
+
+    // sacar la pagina actual 
+    let page = 1;
+    if (req.params.page) page = req.params.page
+
+    // establecer num de elementos por paginas 
+    let itemsPerPage = 5;
+
+    // sacar un array ids limpios de los usuarios que yo sigo como usuairo identificado 
+    try {
+
+        const myFollows = await followService.followUserIds(req.user.id);
+
+        // hacemos un find a publicaciones utilizando operador in, ordenar, popular, paginar
+        const publications = await Publication.find({ user: myFollows.following })
+            .populate("user", "-password -role -__v -email")
+            .sort("-created_at")
+            .paginate(page, itemsPerPage, (error, publications, total) => {
+
+                if(error || !publications){
+                    return res.status(404).json({
+                        status: "error",
+                        message: "ERROR EN TRAER PUBLICAIONES"
+                    });
+                }
+                return res.status(200).json({
+                    status: "succes",
+                    message: "FEEDS DE PUBLICACIONES",
+                    following: myFollows.following,
+                    publications,
+                    page,
+                    itemsPerPage,
+                    pages: Math.ceil(total / itemsPerPage),
+                    total
+                });
+            });
+
+
+
+    } catch (error) {
+
+        return res.status(404).json({
+            status: "error",
+            message: "HUBO UN ERROR EN TRAER LAS FEEDS"
+        });
+
+    }
+
+}
+
 // EXPORTAR ACCIONES 
 module.exports = {
     pruebaPublication,
@@ -225,5 +277,6 @@ module.exports = {
     remove,
     user,
     upload,
-    media
+    media,
+    feed
 }
