@@ -2,6 +2,9 @@ ESTA BASE DE DATOS SE USARA PARA UNA RED SOCIAL HECHA CON REACT
 PARA QUE LA API FUNCIONE USAREMOS MONGODB CON MONGOCOMPASS
 LIBRERIAS QUE USAREMOS: BCRYPT - MONGOOSE - EXPRESS - FS - PATH - JWT - MULTER
 
+LA API TENDRA LAS FUNCIONALIDADES DE:
+USUARIOS: REGISTRARSE, INGRESAR, SEGUIR, DEJAR DE SEGUIR, PUBLICAR PUBLICACIONES, ELIMINARLAS, SUBIR IMAGENES, VER SEGUIDORES, VER SEGUIDOS Y MÁS.
+
 La estructura es la siguiente
 Carpeta controllers: tendra los controladores de cada modelo de datos, y cada controlador tendra direntes metodos/acciones
 Carpeta models: contendra todos los modelos de datos que guardaremos y con los que trabajaremos, usuarios, publicaciones, etc
