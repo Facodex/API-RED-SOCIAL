@@ -135,6 +135,7 @@ const followers = (req, res) => {
 
     // comprobar si me llega la pagina 
     let page = 1;
+    
     if (req.params.page) page = req.params.page;
 
     // indicar cuantos usuarios por pagina quiero mostrar
