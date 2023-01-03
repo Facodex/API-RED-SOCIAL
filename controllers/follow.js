@@ -43,7 +43,7 @@ const save = (req, res) => {
 
         }
         return res.status(200).send({
-            status: "succes",
+            status: "success",
             identity: req.user,
             follow: followStored
         });
@@ -76,7 +76,7 @@ const unfollow = (req, res) => {
         }
 
         return res.status(200).send({
-            status: "succes",
+            status: "success",
             message: "Follow eliminado correctamente"
         });
     });
@@ -111,7 +111,7 @@ const following = (req, res) => {
             let followUserIds = await followService.followUserIds(req.user.id);
 
             return res.status(200).send({
-                status: "succes",
+                status: "success",
                 message: "LISTADO DE USUARIOS QUE x ESTA SIGUIENDO",
                 follows,
                 total,
@@ -149,7 +149,7 @@ const followers = (req, res) => {
             let followUserIds = await followService.followUserIds(req.user.id);
 
             return res.status(200).send({
-                status: "succes",
+                status: "success",
                 message: "LISTADO DE USUARIOS QUE SIGUEN AL "+ userId + " de esta metodo",
                 follows,
                 total,
