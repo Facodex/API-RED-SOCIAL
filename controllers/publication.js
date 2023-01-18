@@ -245,7 +245,7 @@ const feed = async (req, res) => {
                     });
                 }
                 return res.status(200).json({
-                    status: "succes",
+                    status: "success",
                     message: "FEEDS DE PUBLICACIONES",
                     following: myFollows.following,
                     publications,
