@@ -11,6 +11,7 @@ const path = require('path');
 // importamos SERVICIOS 
 const jwt = require('../services/jwt');
 const followService = require('../services/followService');
+const validate = require('../helpers/validate');
 
 // ACCIONES DE PRUEBA 
 const pruebaUser = (req, res) => {
@@ -33,6 +34,16 @@ const register = (req, res) => {
         });
     }
 
+    // validacion avanzada 
+    try {
+        validate(params);
+    } catch (error) {
+        return res.status(400).json({
+            status: "error",
+            message: "VALIDACION NO SUPERADA",
+        });
+    }
+    
 
     //control usuarios duplicados 
     User.find({
